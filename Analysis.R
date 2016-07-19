@@ -10,6 +10,10 @@ if(Sys.info()["user"] == "Tomas"){
 } else {
   filePath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code"
 }
+<<<<<<< HEAD
+=======
+
+>>>>>>> upstream/master
 
 #######################################
 ############## READ DATA ##############
@@ -109,39 +113,6 @@ dbP <- filter(dbP, area_gps >=0.05 & area_gps <=10 & area_tot <= 10)
 
 # restrict attention to plots that use N < 1000. There large outliers that are removed.
 dbP <- dplyr::filter(dbP, N < 1000)
-
-# Remove hhid that have split and moved. We keep households that have split and/or moved within the village as we expect them to own and work the same plots
-
-# Construct a key that links different years
-# Potential problem is the splitting of hh over time.
-# To investigate this furter we add information on which hh are split off and which are original y2 hh.
-# 
-# # Input files
-# key1 <- read_dta(file.path(dataPath, "\\2012\\Data\\NPSY3.PANEL.KEY.dta")) %>% rename(hhid2012=y3_hhid, hhid2010=y2_hhid)
-# key2 <- read_dta(file.path(dataPath, "\\2012\\Data\\HH_SEC_A.dta")) %>%
-#    dplyr::select(hhid2012=y3_hhid, hhtype = hh_a10, hhloc = hh_a11) %>%
-#    mutate(hhtype = factor(hhtype, levels = c(1 ,2), labels = c("Original", "Split-off")),
-#           hhloc = factor(hhloc, levels = c(1,2,3), labels = c("In same location", "Local tracking", "Distance tracking")))
-#  
-# # Create key
-# key1$hhid2010 <- zap_empty(key1$hhid2010)
-# key1$hhid2012 <- zap_empty(key1$hhid2012)
-# # 
-# key <- dplyr::select(key1, hhid2010, hhid2012) %>%
-#    na.omit() %>%
-#    unique() %>%
-#    left_join(., key2) %>%
-#    arrange(hhid2012)
-#  
-# # Remove hh that have merged between y2 and y3
-# dupl2012 <- dplyr::select(key, hhid2012) %>% do(filter(., duplicated(.)))
-# key <- key[!(key$hhid2012 %in% dupl2012$hhid2012),]
-# saveRDS(key, file = "Analysis\\TZA\\Data\\key.rds")
-
-key <- readRDS("Analysis\\TZA\\Data\\key.rds") %>% filter(hhloc != "Distance tracking")
-
-good <- dbP$hhid2012 %in% key$hhid2012
-dbP <- dbP[good,]
 
 # Make sure that all plots have a hhid number 
 dbP$hhid <- ifelse(is.na(dbP$hhid2012), dbP$hhid2010, dbP$hhid2012)
@@ -344,7 +315,7 @@ robust.se1   <- sqrt(diag(cov1))
 
 OLS2 <- lm(yld ~ noN + N:AEZ2 + N2:AEZ2 + 
              N:soil + 
-             SOC2 + phdum2 +
+             N:SOC2 + N:phdum2 +
              #N:P +
              rain_wq + I(rain_wq*rain_wq) +
              logasset + lab + area + 

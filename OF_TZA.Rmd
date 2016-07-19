@@ -1,5 +1,6 @@
 ---
-title: "Untitled"
+title: "Optimal fertilizer in Tanzania"
+author: "Michiel van Dijk & Tom Morley"
 output: pdf_document
 ---
 
@@ -7,16 +8,69 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## R Markdown
+# Abstract
 
-This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+# Introduction
+It has widely been acknowledged that (inorganic) fertilizer use needs to be increased in Africa to boost productivity and achieve food security. For this reason, African ministers agreed to increase the use of fertilizer to at least 50 kilograms per hectare by 2015 during the Abuja Fertilizer summit in 2006, followed by the start of several large scale subsidy programmes to stimulate fertilizer adoption throughout Africa. Also in Tanzania such a program was initiated in 2008: the National Agricultural Input Voucher Scheme (NAIVS), which recently has been upscaled.
 
-```{r cars}
-summary(cars)
-```
+To evaluate these programs, it is of crucial importance to better understand the yield response to fertilizer and at which levels fertilizer use is profitable for farmers. Nonetheless, up to recently only a few studies have been completed that investigate these issues using representative national households surveys and controlling for differences in bio-physical conditions such as soil quality, precipitation and elevation as well as plot and farm level characteristics (e.g. inputs, multi-cropping and experience). Prime examples are Sheahan et al. (2013) and Liverpool-Tasie (2014), who analyse fertilizer profitability of maize in Kenya and rice in Nigeria, respectively. 
 
+To our knowledge, there are no studies on this topic with relation to Tanzania. The aim of this paper is to analyse the profitable use of fertilizer by farmers on maize plots in Tanzania and how this compares with actual use. For this purpose we estimate yield response functions and calculate marginal value cost ratios (MVCRs) at different levels of spatial aggregation. Apart from standard econometric approaches, we also apply an innovative framework that estimates yield profitability for only the efficient firms using a stochastic frontier approach. We are focusing on maize because it is the most important staple food crop in Tanzania, cultivated in large parts of the country. 
+
+An understanding of the effective demand for fertilizer is crucial in developing and implementing fertilizer promotion programmes. Effective demand depends primarily on the (expected) profitability of applying fertilizers in the absence of market failures (roads and risk management (credit and insurance). Key question is if fertilizer adoption is low because of market failures (roads, risk management) => subsidies in the short run (till market failures are solved) needed to overcome this. Or because of yield response is very low because of farmer knowledge, soil quality => extension services and soil management are needed.
+
+Maize is considered the most important food crop in Tanzania covering 40 percent of total land area planted to crops and 67 percent of the area planted to cereal grains in 2011/12. Approximately 60 percent of all smallholder farm households grow this crop (Agriculture Sample Census 2008-09). Maize is sown in all Regions of the country, with the largest share of crop area found in Iringa, Shinyanga, Morogoro, Mbeya, and Kigoma, all areas originally targeted by the NAIVS program. The southern highlands (Iringa, Mbeya and Ruvuma) tend to produce surplus maize compared to consumption levels, while there tend to be deficits in the northern highlands, Dar es Salaam, and central regions. (WB 2014) [ALSO CHECK FAO Maize report]
+
+
+# Fertilizer use in maize production and subsidy program
+
+In 2007/2008, the government of Tanzania (with support of the World Bank), introduced the National Agricultural Voucher Scheme (NAIVS)  as a reform of previous agricultural support programs (see Cagley and Plotnick, 2009 for an overview). It was designed as a response to a sharp rise in food prices in 2006 that were caused by a drought, further exacerbated by the subsequent unexpected global increase in grain and fertilizer prices in 2007/2008 (World Bank, 2009, 2014). The main aim of the NAIVS was to increase the production of maize and rice production by improving the access to and adoption of key improved seeds and inorganic fertilizer in order enhance household and national food security. A second aim of the NAIVS was the strengthening of input supply chains by stimulating the establishment of agro-dealers at the village level and strengthening the national seeds system by reviewing the national seed policy and regulatory framework. 
+
+In 2007 the NAIVS was piloted in two districts but gradually expanded into a countrywide program that covered more than 65 districts in Tanzania. The largest share of input subsidy vouchers has been distributed to 12 high potential maize regions that were designated as primary target regions during the initial implementation of the NAIVS, while smaller quantities are allocated to all other rural regions. The program peaked in 2011/2012 reaching the overall target of 2.5 million beneficiaries,  after which it declined to XX farmers in 2013/2014 [add some tables and figures?].  [Does it still exist?]. Around 80 percent of the vouchers are allocated to maize farmers and the rest to rice farmers.
+
+Each targeted farmer was offered three vouchers: (1) 10 kg of improved (hybrid or open pollinated variety) maize seed or 15 kg of paddy rice seed; (2) one 50kg bag of diammonium phosphate (DAP) or two 50 kg bags of Minjingu Rock Phosphate (MRP) basal  fertilizer, and;(3) one 50 kg bag of urea top dress fertilizer. To obtain the agricultural inputs, farmers could redeem the voucher plus an additional cash payment of 50% of the value of the inputs at a local agro-dealer that has been certified by the local district government to participate in the program.
+
+The prime target of the NAIVS are a middle group of farmers that had to fulfil a number of criteria to be eligible for the program (World Bank, 2009), including: (1) being a full time farmer that resides in the village for at least five years and is of good repute , (2) cultivating less than one hectare of maize or rice, (3) willing use the vouchers and follow the advice of extension workers, (4) able to co-finance the inputs (pay 50 percent of the input cost), (5) willing to verify his or her use of the inputs, (6) priority will be given to given to the female-headed households; (7) priority will be given to farming households that have no or limited experience with applying improved farm inputs in the previous five years. Potential beneficiaries are selected by a Village Voucher Committee that is formed in each participating village prior to the start of the planting season. Beneficiaries receive the subsidy for a maximum period of three years after which they are expected to graduate from the program.  
+
+
+
+
+
+# Methodology and data
+
+## Conceptual model
+The assumption of perfect markets is not realistic in the context of developing countries. Input and output markets in these countries are characterised by a myriad of market failures, such as missing credit and insurance markets, high transactions costs because of poor road infrastructure and lack of information on input and output prices (Stiglitz 1989; Janvry et al. 1991). It has been shown that under these conditions, the modelling of rural household behaviour implies non-separability between production and consumption decisions (Singh et al. 1986). [ADD sentence on subsistence farmers and need to produce for own consumption]. This means that, in contrast to the separable model outlined above, the farmer’s decisions related to production (e.g. use of inputs, choice of activities and desired production levels) are affected by its consumer characteristics (e.g. consumption preferences, and sociodemographic composition) as well as transaction costs. (Janvry & Sadoulet 2006). These need to be taken into account when estimating yield response and input demand functions [REF]. 
+
+The assumption of perfect markets is not realistic in the context of developing countries. It is well known that input and output markets in these countries are characterised by a myriad of market failures, such as missing credit and insurance markets, high transactions costs because of poor road infrastructure and lack of information on input and output prices (Stiglitz 1989; Dillon & Barrett 2014). It has been shown that under these conditions, apart from input and output prices, demand for inputs is also influenced by household preferences and characteristics that affect access to market information, credit and transport (Singh et al. 1986; Janvry & Sadoulet 2006).  Examples of relevant household characteristics include human capital (e.g. education), sociodemographic composition and household assets. An interesting application in this context is Liverpool-Tasie et al. (2014), who use yield response functions to determine optimal fertilizer for rice production at the plot level in Nigeria.
+
+## Econometric model
+The methodology we use is similar to that used by Sheahan et al. (2013) and Liverpool-Tasie (2014). We start by estimating a yield response function at the plot level, controlling for plot and household characteristics as well as agronomic conditions for which data at community level are available. We apply a correlated random effects (CRE) framework to control for bias caused by unobserved time invariant characteristics and explore the use of a control function approach (CFA) to address the problem of unobserved time varying effects. We both present estimations for the marginal physical product (MPP) of fertilizer at the country and agro-ecological zone level and combine these results with information on maize and fertilizer prices to MVCRs and fertilizer rates with the highest profitability at different levels of spatial aggregation. 
+
+A potential limitation of the OLS/CRE approach is that the MPP of fertilizer represents an average measure, which does not distinguish between efficient and inefficient farmers. In practice, with the same level of (other) inputs and under similar agronomic conditions, some farmers will use less fertilizer than others because of limited knowledge, lack of support services and other factors that negatively affect technical efficiency. One would expect that efficient farmers, that operate on the technology frontier have higher MPP of fertilizer in maize than farmers that operate below the frontier and, hence, a higher yield level for which profit is maximised. To test this hypothesis we apply an innovative approach that uses stochastic frontier functions to estimate MPP and MVCRs. 
+
+
+
+## data
+The data for the analysis are taken from the Living Standards Measurement Study – Integrated Surveys on Agriculture (LSMS-ISA) that is implemented and published by the World Bank in collaboration with national statistics offices. The LSMS-ISA are multi-topic, panel household surveys with a strong focus on agriculture, which primary objective is “to foster innovation and efficiency in statistical research on the links between agriculture and poverty reduction in the region.” The database is publically available and disseminated by each country’s statistics office website as well as the LSMS website. Apart from Tanzania, the project is covering six other Sub-Saharan African  countries. 
+At present, the Tanzanian LSMS-ISA is available for two survey rounds: 2008-2009 and 2010-2011. The sample design was designed to be representative at the national, urban/rural and major agro-ecological zones and spans all regions and all districts of Tanzania. The sample was divided into two stratums (mainland and Zanzibar) and within each stratum, Enumeration Areas (Aes), , mostly villages/communities in rural areas as well as urban areas, were chosen at random, with the probability of selection proportional to the population size. Subsequently, for each EA a sample a households was drawn which were selected to be interviewed. The sample size for the first round was 3,265 households in 409 Eas of which 258 are rural villages. For the second round all households of the first round were revisited and adult split-off household members were also tracked. The total sample size of the second round was 3924 households. 
+As part of the survey, information is collected on all agricultural plots that are owned and/or cultivated by the households, including among others: size, output, main crop and several bio-physical characteristics (soil quality, slope and irrigation). For 25 percent of the samples households in the first round GPS equipment was used to accurately measure the size of the plots and provide coordinates of the location of the plot while for the second round all households have been covered. The GPS coordinates are only provided at the village level and presented with a random ‘offset’ to ensure confidentiality of the participating households. To broaden the analysis, the LSMS-ISA databases also include a set of geospatial variables from a variety of geospatial databases that are linked with the survey data by means of the (unmodified) GPS coordinates. The geospatial data covers extensive measures of distance, climatology, soil and terrain and other environmental factors from, among others, the WorldClim, AfSIS and FAO’s Harmonized World Soil Database.  
+The database makes it possible to distinguish between five levels of analysis, each of which can be related to different yield determining factors: (1) plots, (2) farms or households, (3) communities or villages (Eas) and (4) districts or wilaya in Swahili. As part of the Agricultural Sector Development Programme (ASDP), Tanzania’s main agricultural policy initiative between 2006 and 2013, each district prepared a District Agricultural Development Plan, that summarizes agricultural support initiatives such as investments in infrastructure (in particular irrigation), agricultural services (primarily agricultural extension), and capacity building and empowerment for farmer groups. Furthermore, there is also anecdotal evidence that the distribution of ASDP funds and its implementation is affected by political patronage (Cooksey, 2012). The inclusion of a district group level is expected to capture these effects.
+Figure 1 provides a first insight into the spatial distribution of agricultural performance in Tanzania. It depicts the average maize yield for 244 communities for which data is available. This number is lower than the total 258 rural villages because in some areas no maize is grown and of missing data. The villages are spread over 110 (out of the total 169) districts (wilaya in Swahili). The sample for which full data is available covers 1051 households and 1529 plots. The figure illustrates the diversity in agricultural performance in Tanzania. Roughly, it shows that yields are relatively low in the South Eastern corner of the country, comparatively high in the area around Mbeya in the West and mixed in most other areas.
+
+
+# Analysis
+
+# Econometric estimation
+
+# Marginal and average products
+
+
+
+# Profitability of government recommendations
+
+
+# Conclusions
 ## Including Plots
 
 You can also embed plots, for example:
