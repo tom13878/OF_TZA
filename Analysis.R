@@ -4,16 +4,20 @@
 ######## Optimal Fertilizer  ##########
 #######################################
 
-# Test
+# file path decision: Michiel or Tom
+if(Sys.info()["user"] == "Tomas"){
+  filePath <- "C:/Users/Tomas/Documents/LEI/pro-gap/"
+} else {
+  filePath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code"
+}
 
 #######################################
 ############## READ DATA ##############
 #######################################
 
 detach(package:dplyr)
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2010PP.r")
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2012PP.r")
-
+source(file.path(filePath, "/TZA/TZA_2010PP.r"))
+source(file.path(filePath, "/TZA/TZA_2012PP.r"))
 
 #######################################
 ############## PACKAGES ETC ###########
