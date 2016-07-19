@@ -11,6 +11,7 @@ if(Sys.info()["user"] == "Tomas"){
   filePath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code"
 }
 
+# comment to test
 
 #######################################
 ############## READ DATA ##############
