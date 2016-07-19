@@ -10,7 +10,11 @@ if(Sys.info()["user"] == "Tomas"){
 } else {
   filePath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code"
 }
-# TESTE
+
+
+
+# comment to test whether collaboration works
+
 
 #######################################
 ############## READ DATA ##############
