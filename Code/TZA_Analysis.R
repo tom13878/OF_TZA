@@ -103,13 +103,14 @@ dbP <- filter(dbP, !(ZONE %in% c("ZANZIBAR")))
 
 # cap yield at 16040 kg/ha, the highest potential yield in TZA (not water limited)
 dbP <- filter(dbP, yld <=16040)
+#dbP <- filter(dbP, yld <=10000)
 
 # Sample includes very small plots <0.005 ha that bias result upwards and very large >35 ha. 
 # As we focus on small scale farmers we restrict area size
 dbP <- filter(dbP, area_gps >=0.05 & area_gps <=10 & area_tot <= 10)
 
 # restrict attention to plots that use N < 1000. There large outliers that are removed.
-dbP <- dplyr::filter(dbP, N < 1000)
+dbP <- dplyr::filter(dbP, N < 700)
 
 # Make sure that all plots have a hhid number 
 dbP$hhid <- ifelse(is.na(dbP$hhid2012), dbP$hhid2010, dbP$hhid2012)
@@ -129,7 +130,7 @@ PPrices <- dbP %>%
             select(-crop_price, -WPn, -WPnnosub, -WPnsub)
   
 # Load and merge price data averaged at district, region, zone and country
-Prices <- readRDS("./Analysis/TZA/Data/Prices.rds")
+#Prices <- readRDS(file.path(filePath"./Analysis/TZA/Data/Prices.rds")
 Prices <- Prices %>% group_by(type) %>%
   dplyr::select(ZONE, REGNAME, DISCODE, surveyyear, price, type) %>%
   spread(type, price) %>% 
@@ -150,6 +151,7 @@ PPrices <- left_join(PPrices, Prices) %>%
 ######################################
 
 db0 <- dbP
+
 
 # Select relevant variables and complete cases
 db0 <- db0 %>% 
@@ -265,7 +267,7 @@ db0 <- droplevels(db0)
 
 # Full sample
 # Interaction terms for soil constraints, P values and others
-OLS0 <- lm(yld ~ noN + N + N2 + P + P2 + logasset + lab + area + 
+OLS0 <- lm(yld ~ noN + N + N2 + logasset + lab + area + 
              hybrd + manure + pest + legume +
              soil + 
              SOC2 + phdum2 + nut + AEZ2 + fs +
@@ -292,12 +294,12 @@ stargazer(OLS0, type = "text",
 OLS1 <- lm(yld ~ noN + N:AEZ2 + N2:AEZ2 + 
              N:soil + 
              N:SOC2 + N:phdum2 +
-             rain_wq +
-             sex + age +
+             age + sex +
+             rain_wq + I(rain_wq*rain_wq) +
              logasset + lab + area + 
              hybrd + manure + pest + legume +
              hh_elevation + hh_slope +
-             crop_count + surveyyear2 + rural + 
+             crop_count + surveyyear2 +  
              REGNAME +
              noN_bar + N_bar + logasset_bar +  lab_bar + area_bar + 
              hybrd_bar + manure_bar + pest_bar +  legume_bar +
@@ -312,8 +314,8 @@ robust.se1   <- sqrt(diag(cov1))
 
 OLS2 <- lm(yld ~ noN + N:AEZ2 + N2:AEZ2 + 
              N:soil + 
-             N:SOC2 + N:phdum2 +
-             #N:P +
+             SOC2 + phdum2 +
+             age + sex +
              rain_wq + I(rain_wq*rain_wq) +
              logasset + lab + area + 
              hybrd + manure + pest + legume +
@@ -332,8 +334,14 @@ robust.se2   <- sqrt(diag(cov2))
 # Adjust F statistic 
 wald1 <- waldtest(OLS1, cov1)
 
+
 stargazer(OLS1, OLS2, type = "text", 
           se = list(robust.se1, robust.se2), intercept.bottom = FALSE, digits = 2, digits.extra = 2)
+
+
+
+stargazer(OLS_harv, OLS_gps, type = "text", 
+          se = list(robust.se_harv, robust.se_gps), intercept.bottom = FALSE, digits = 2, digits.extra = 2)
 
 table(db0$rain_wq, db0$AEZ2)
 ggplot(data = db0, aes(x=rain_wq, y = yld)) + geom_point() + facet_wrap(~AEZ2)
