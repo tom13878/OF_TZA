@@ -10,10 +10,6 @@ if(Sys.info()["user"] == "Tomas"){
 } else {
   filePath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code"
 }
-<<<<<<< HEAD
-=======
-
->>>>>>> upstream/master
 
 #######################################
 ############## READ DATA ##############
@@ -22,6 +18,16 @@ if(Sys.info()["user"] == "Tomas"){
 detach(package:dplyr)
 source(file.path(filePath, "/TZA/TZA_2010PP.r"))
 source(file.path(filePath, "/TZA/TZA_2012PP.r"))
+
+# political data including the link
+# file which matches districts between
+# the LSMS data and the political
+# results for 2010
+source(file.path(filePath, "../pol/code/pol20104analysis.R"))
+prez2010 <- rename(prez2010, REGNAME_POL=reg, DISNAME_POL=dis)
+polLink <- read.csv(file.path(filePath, "../pol/data/link_files/lsms2pol.csv"))
+polLink <- rename(polLink, REGNAME=REGNAME_LSMS, DISNAME=DISNAME_LSMS)
+polLink$NOTE <- NULL
 
 #######################################
 ############## PACKAGES ETC ###########
@@ -158,7 +164,7 @@ db0 <- dbP
 
 # Select relevant variables and complete cases
 db0 <- db0 %>% 
-  dplyr::select(hhid, id, ZONE, REGCODE, REGNAME, DISCODE, plotnum,
+  dplyr::select(hhid, id, ZONE, REGCODE, REGNAME, DISCODE, DISNAME, plotnum,
                 yld, N, P, area, area_tot, AEZ, asset, lab, hybrd, manure, pest, soil, legume, irrig, 
                 sex, age, 
                 crop_count, surveyyear, 
@@ -257,6 +263,18 @@ db0 <- ddply(db0, .(hhid), transform,
 # Drop unused levels (e.g. Zanzibar in zone), which are giving problems with sfa
 db0 <- droplevels(db0)
 
+# -------------------------------------
+# add political variables
+# -------------------------------------
+
+# 1. merge the db0 database (LSMS) with the
+# link file
+db0 <- left_join(db0, polLink)
+
+# 2. merge the db0 database (LSMS) with
+# the political results (from NEC)
+db0 <- left_join(db0, prez2010)
+
 #######################################
 ############## ANALYSIS ###############
 #######################################
@@ -267,6 +285,38 @@ db0 <- droplevels(db0)
 # Cannot introduce too many interaction terms with N because of limited N application and variability.
 # N is only used in several regions. We run regressions for the whole country and regions where fertilizer is used (see Nuse above).
 
+# -------------------------------------
+# first step in the estimation deals with
+# the time varying endogeneity by using
+# the CFA with a number of possible
+# variables as instruments. We then keep the
+# residuals and use them in the next stage
+# -------------------------------------
+
+modl.tobit <- tobit(N ~ split_prez10 + logasset + lab + area + hybrd +
+                      manure + pest + legume + soil +
+                      SOC2 + phdum2 + nut + AEZ2 + fs +
+                      sex + age + crop_count + surveyyear2 +
+                      rural + rain_wq + REGNAME +
+                      noN_bar + N_bar + logasset_bar +  lab_bar + area_bar + 
+                      hybrd_bar + manure_bar + pest_bar +  legume_bar +
+                      soilSandy_bar + soilLoam_bar + soilClay_bar + soilOther_bar +
+                      crop_count_bar, data=db0)
+
+# We can directly read the tobit model
+# results, but to make them comparable
+# to OLS we need the Avergae Partial Effects
+# (APEs). SO we calcualte the scale factor
+# and multiply the coefficients  by it
+sigma <- modl.tobit$scale
+X <- model.matrix(modl.tobit)
+n <- nrow(X)
+APE <- (1/n) * sum(pnorm(((X %*% coef(modl.tobit)))/sigma, 0, 1))
+
+# but for the next stage we need the residuals
+# which can then be incorporated into the 
+# next stage of the analysis
+omega <- residuals(modl.tobit)
 
 # Full sample
 # Interaction terms for soil constraints, P values and others
