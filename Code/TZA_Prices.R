@@ -84,6 +84,7 @@ fert2010[] <- lapply(fert2010, strip_attributes)
 fert2010 <- fert2010 %>% 
   mutate(hhid2010 = as.character(hhid2010)) %>%
   left_join(., key_2010) %>%
+  dplyr::select(-hhid2010) %>%
   filter(zaocode == 11)
 
 fert2012_1 <- read_dta(file.path(surveyPath, "TZA\\2012\\Data\\AG_SEC_3A.dta")) %>%
@@ -101,8 +102,8 @@ fert2012[] <- lapply(fert2012, strip_attributes)
 fert2012 <- fert2012 %>% 
   mutate(hhid2012 = as.character(hhid2012)) %>%
   left_join(., key_2012) %>%
+  dplyr::select(-hhid2012) %>%
   filter(zaocode == 11)
-
 
 fert <- rbind(fert2010, fert2012) %>% 
                     mutate(typ = factor(typ, levels = c(1, 2, 3, 4, 5, 6, 7), labels = c("dap", "urea", "tsp", "can", "sa", "npk", "mrp")), 
@@ -487,5 +488,6 @@ Prices <- rbind(pricesPerDistrictmar, pricesPerDistrictmix, pricesPerDistrictsub
 #check <- Prices %>% select(-product, - level, -number) %>% spread(type, price)
 
 saveRDS(Prices, file = "Data\\Prices.rds")
-#ggplot(data = filter(Prices, product == "fertilizer"), aes(x=price)) + geom_density() + facet_wrap(~type+level+surveyyear, scales = "free")
 
+
+ggplot(data = Prices) + geom_boxplot(aes(x = price)) + facet_wrap(~ZONE)
