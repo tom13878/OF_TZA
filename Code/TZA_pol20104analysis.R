@@ -88,3 +88,4 @@ rm(prez2010_dis, prez2010_dis_All, urban, dataPath, dar)
 #             split_prez10=ifelse(length(party) == 1, ifelse(is.na(perc), 100, perc),
 #                                abs(perc[party %in% "CCM"] - max(perc[!party %in% "CCM"],
 #                                                                 na.rm=TRUE))))
+

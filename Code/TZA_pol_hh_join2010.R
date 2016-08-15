@@ -7,16 +7,16 @@ library(haven)
 library(rgdal)
 library(dplyr)
 
-setwd("D:/Data/Projects/OF_TZA/Data")
+setwd("D:/Data/Projects/OF_TZA/")
 LSMSPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/TZA/"
 
 # read in the link file
-ward_con_link2010 <- read.csv("link_files/ward_con_link2010.csv")
+ward_con_link2010 <- read.csv("Data/link_files/ward_con_link2010.csv")
 
 # read in the legislative and presidenial results
 
-leg2010 <- read.csv("legislative/leg2010.csv") %>% select(-dis)
-prez2010 <- readRDS("prez2010/prez2010.rds") %>% select(-dis)
+leg2010 <- read.csv("Data/legislative/leg2010.csv") %>% select(-dis)
+prez2010 <- readRDS("Data/prez2010/prez2010.rds") %>% select(-dis)
 
 pol2010 <- left_join(ward_con_link2010, leg2010) %>% left_join(prez2010)
 
@@ -35,7 +35,7 @@ gps2 <- read_dta(file.path(LSMSPath, "2012/Data/HouseholdGeovars_Y3.dta")) %>%
   select(y3_hhid, longitude=lon_dd_mod, latitude=lat_dd_mod)
 
 # map from GADM
-TZA <- readRDS("GADM_2.7_TZA_adm3.rds")
+TZA <- readRDS("Data/GADM_2.7_TZA_adm3.rds")
 
 # -------------------------------------
 # Overlay the gps coordinates of each
@@ -100,5 +100,5 @@ data2010 <- left_join(data2010, pol2010)
 data2012 <- left_join(data2012, pol2010)
 
 # save data
-write.csv(data2010, "polInt2010.csv", row.names=FALSE)
-write.csv(data2012, "polInt2012.csv", row.names=FALSE)
+saveRDS(data2010, "Cache/polInt2010.rds")
+saveRDS(data2012, "Cache/polInt2012.rds")
