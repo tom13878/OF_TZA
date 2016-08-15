@@ -4,8 +4,8 @@
 # census maps
 # -------------------------------------
 
-dataPath <- "C:/Users/Tomas/Documents/LEI/pol" 
-prez2010 <- readRDS(file.path(dataPath, "data/prez2010/prez2010.rds"))
+dataPath <- "D:/Data/Projects/OF_TZA/" 
+prez2010 <- readRDS(file.path(dataPath, "Data/prez2010/prez2010.rds"))
 
 # the 2002 census map does not match up
 # perfectly with the election results.
@@ -64,4 +64,4 @@ prez2010_map$dis <- ifelse(prez2010_map$dis %in% muheza, "WILAYA YA MUHEZA", pre
 rm(arusha, babati, dodomaRural, hai, kibaha, korogwe, monduli, mpanda, muheza, tarime)
 
 # save for use in mapping
-saveRDS(prez2010_map, file.path(dataPath, "data/prez2010/prez2010_map.rds"))
+saveRDS(prez2010_map, file.path(dataPath, "Data/prez2010/prez2010_map.rds"))

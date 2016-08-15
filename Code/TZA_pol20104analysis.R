@@ -6,8 +6,8 @@
 library(dplyr)
 library(reshape2)
 
-dataPath <- "C:/Users/Tomas/Documents/LEI/pol" 
-prez2010 <- readRDS(file.path(dataPath, "data/prez2010/prez2010.rds"))
+dataPath <- "D:/Data/Projects/OF_TZA" 
+prez2010 <- readRDS(file.path(dataPath, "Data/prez2010/prez2010.rds"))
 
 # In many places there are Swahili names
 # we remove this part of the name

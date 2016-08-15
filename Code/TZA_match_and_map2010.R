@@ -5,8 +5,7 @@
 # -------------------------------------
 
 # path to folder
-#dataPath <- "C:/Users/Tomas/Documents/LEI/pol" 
-dataPath <- "D:/Data/Projects/OF_TZA/Cache" 
+dataPath <- "D:/Data/Projects/OF_TZA" 
 
 # packages
 library(rgdal)
@@ -16,7 +15,7 @@ library(RColorBrewer)
 library(dplyr)
 
 # read in the data
-prez2010_map <- readRDS(file.path(dataPath, "data/prez2010/prez2010_map.rds"))
+prez2010_map <- readRDS(file.path(dataPath, "Data/prez2010/prez2010_map.rds"))
 
 # summarise the data to the district/party level
 prez2010_dis_map <- group_by(prez2010_map, reg, dis, party) %>%
@@ -37,11 +36,11 @@ prez2010_dis_map <- select(prez2010_dis_map, reg, dis, party, percent) %>%
 # read in the map2pol file
 # -------------------------------------
 
-map2pol <- read.csv(file.path(dataPath, "data/map2pol.csv"))
+map2pol <- read.csv(file.path(dataPath, "Data/map2pol2010.csv"))
 names(map2pol) <- c("REGNAME", "DISTNAME", "reg", "dis")
 
 # get map
-TZA <- readOGR(dsn = file.path(dataPath, "data/maps/Tanzania_District_EA_2002_region"), layer = "Tanzania_District_EA_2002_region")
+TZA <- readOGR(dsn = file.path(dataPath, "Data/maps/Tanzania_District_EA_2002_region"), layer = "Tanzania_District_EA_2002_region")
 
 # join with political data districts.
 TZA@data <- left_join(TZA@data, map2pol) # islands are missing but that's fine!
@@ -83,6 +82,6 @@ plotter2 <- function(var, color) ggplot(tf) +
   scale_fill_gradientn(colours=c("#ffffff", brewer.pal(n=9, name=color)),
                        na.value="#ffffff", limits=c(0, 100))
 
-# pdf(paste0(dataPath, "parties2.pdf"))
-# lapply(1:7, function(i) plotter2(parties[i], colors[i]))
-# dev.off()
+pdf(file.path(dataPath, "Graphs/parties2.pdf"))
+lapply(1:7, function(i) plotter2(parties[i], colors[i]))
+dev.off()

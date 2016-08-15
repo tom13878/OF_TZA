@@ -3,7 +3,7 @@
 # results downloaded from the NEC website
 # -------------------------------------
 
-dataPath <- "D:/Data/Projects/OF_TZA/Cache" 
+dataPath <- "D:/Data/Projects/OF_TZA/" 
 
 library(dplyr)
 library(reshape2)
@@ -16,7 +16,7 @@ prez2010 <- data.frame()
 # so these files likely contained nothing
 
 for( i in c(1:12, 16:24)){
-  fileName <- paste("data/prez2010/prez2010_", i, ".csv", sep="")
+  fileName <- paste("Data/prez2010/prez2010_", i, ".csv", sep="")
   file <- read.csv(file.path(dataPath, fileName))
   prez2010 <- rbind(prez2010, file)
 }
@@ -44,4 +44,4 @@ prez2010$spoilt <- as.numeric(as.character(prez2010$spoilt))
 prez2010$perc <- as.numeric(as.character(prez2010$perc))
 
 # write to file to use later
-saveRDS(prez2010, file.path(dataPath, "data/prez2010/prez2010.rds"))
+saveRDS(prez2010, file.path(dataPath, "Data/prez2010/prez2010.rds"))

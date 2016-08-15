@@ -7,7 +7,8 @@ library(haven)
 library(rgdal)
 library(dplyr)
 
-setwd("c:/users/tomas/documents/lei/pol/data")
+setwd("D:/Data/Projects/OF_TZA/Data")
+LSMSPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/TZA/"
 
 # read in the link file
 ward_con_link2010 <- read.csv("link_files/ward_con_link2010.csv")
@@ -15,7 +16,7 @@ ward_con_link2010 <- read.csv("link_files/ward_con_link2010.csv")
 # read in the legislative and presidenial results
 
 leg2010 <- read.csv("legislative/leg2010.csv") %>% select(-dis)
-prez2010 <- read.csv("prez2010/prez2010.csv") %>% select(-dis)
+prez2010 <- readRDS("prez2010/prez2010.rds") %>% select(-dis)
 
 pol2010 <- left_join(ward_con_link2010, leg2010) %>% left_join(prez2010)
 
@@ -27,12 +28,10 @@ rm(list=ls()[!ls() %in% "pol2010"])
 # -------------------------------------
 
 # read in the gps information
-geoDir1 <- "C:/Users/Tomas/Documents/LEI/data/TZA/TZNPS2GEODTA/HH.Geovariables_Y2.dta"
-gps1 <- read_dta(geoDir1) %>%
+gps1 <- read_dta(file.path(LSMSPath, "2010/Data/TZNPS2GEODTA/HH.Geovariables_Y2.dta")) %>%
   select(y2_hhid, longitude=lon_modified, latitude=lat_modified)
 
-geoDir2 <- "C:/Users/Tomas/Documents/LEI/data/TZA/TZA_2012_LSMS_v01_M_STATA_English_labels/HouseholdGeovars_Y3.dta"
-gps2 <- read_dta(geoDir2) %>%
+gps2 <- read_dta(file.path(LSMSPath, "2012/Data/HouseholdGeovars_Y3.dta")) %>%
   select(y3_hhid, longitude=lon_dd_mod, latitude=lat_dd_mod)
 
 # map from GADM

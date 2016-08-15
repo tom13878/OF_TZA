@@ -71,4 +71,4 @@ leg10 <- group_by(leg10, reg, dis, con) %>%
                                                                 na.rm=TRUE))))
 
 # write to csv
-write.csv(leg10, "Cache/leg2010.csv", row.names=FALSE)
+write.csv(leg10, "Data/leg2010.csv", row.names=FALSE)
