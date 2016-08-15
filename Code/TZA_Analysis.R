@@ -6,28 +6,10 @@
 
 # file path decision: Michiel or Tom
 if(Sys.info()["user"] == "Tomas"){
-  filePath <- "C:/Users/Tomas/Documents/LEI/pro-gap/"
+  filePath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/"
 } else {
-  filePath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code"
+  filePath <- "D:/Data/Projects/OF_TZA/"
 }
-
-#######################################
-############## READ DATA ##############
-#######################################
-
-detach(package:dplyr)
-source(file.path(filePath, "/TZA/TZA_2010PP.r"))
-source(file.path(filePath, "/TZA/TZA_2012PP.r"))
-
-# political data including the link
-# file which matches districts between
-# the LSMS data and the political
-# results for 2010
-source(file.path(filePath, "../pol/code/pol20104analysis.R"))
-prez2010 <- rename(prez2010, REGNAME_POL=reg, DISNAME_POL=dis)
-polLink <- read.csv(file.path(filePath, "../pol/data/link_files/lsms2pol.csv"))
-polLink <- rename(polLink, REGNAME=REGNAME_LSMS, DISNAME=DISNAME_LSMS)
-polLink$NOTE <- NULL
 
 #######################################
 ############## PACKAGES ETC ###########
@@ -54,21 +36,12 @@ source("Analysis/TZA/Code/waterfall_plot.R")
 options(scipen=999)
 
 
+
 #######################################
-###### POOLED DATABASE ################
+############## READ DATA ##############
 #######################################
 
-# get all name variables that are common to the three waves
-good <- Reduce(intersect, list(names(TZA2010), names(TZA2012)))
-
-# select only those names common in both waves
-TZA2010_2 <- TZA2010[, good]
-TZA2012_2 <- TZA2012[, good]
-
-# new full dataset
-dbP <- rbind(TZA2010_2, TZA2012_2) %>%
-  dplyr::select(hhid2010, indidy2, hhid2012, indidy3, everything())
-
+dbP <- readRDS("Cache/Pooled_TZA.rds")
 
 #######################################
 ############## CLEANING ###############

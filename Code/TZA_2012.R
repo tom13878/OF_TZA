@@ -8,7 +8,7 @@ if(Sys.info()["user"] == "Tomas"){
   dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/TZA/2012/Data"
 }
 
-geoPath <- "D:/Data/Projects/TZAYG/Cache"
+geoPath <- "D:/Data/Projects/OF_TZA/Cache"
 
 # load packages
 library(haven)

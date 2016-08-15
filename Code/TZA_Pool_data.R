@@ -1,21 +1,23 @@
 ############################
-#### PREPARE ETH PANEL #####
+#### PREPARE TZA PANEL #####
 ############################
 
 ############################################
 ############## READ THE DATA ###############
 ############################################
 
-source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2011.r")
-source("D:\\Data\\Projects\\ETHYG\\Code\\ETH_2013.r")
+wdPath <- "D:/Data/Projects/OF_TZA/"
+setwd(wdPath)
+
+source("Code\\TZA_2010.r")
+source("Code\\TZA_2012.r")
 
 #######################################
 ############## PACKAGES ETC ###########
 #######################################
 
+
 dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
-wdPath <- "D:\\Data\\Projects\\ETHYG"
-setwd(wdPath)
 
 library(plyr)
 library(dplyr)
@@ -31,52 +33,27 @@ options(scipen=999)
 ###### POOL DATABASE ######
 ###########################
 
-# in the second wave, the household
-# identification number of the first
-# wave is used. However these are recorded
-# as an empty character string if the 
-# household entered the survey in wave
-# two. ("")
 
-table(ETH2013$household_id %in% "")
-ETH2013$household_id <- zap_empty(ETH2013$household_id)
-table(is.na(ETH2013$household_id))
-
-# the same is true of the individual id
-table(ETH2013$individual_id %in% "")
-ETH2013$individual_id <- zap_empty(ETH2013$individual_id )
-table(is.na(ETH2013$individual_id))
-
-# and the ea_id
-table(ETH2013$ea_id %in% "")
-ETH2013$ea_id <- zap_empty(ETH2013$ea_id)
-table(is.na(ETH2013$ea_id))
-
-# use the first wave household identification
-# number. Where this is missing use the
-# second wave household identification number
-ETH2013$household_id <- ifelse(is.na(ETH2013$household_id), ETH2013$household_id2, ETH2013$household_id)
-ETH2013$individual_id <- ifelse(is.na(ETH2013$individual_id), ETH2013$individual_id2, ETH2013$individual_id)
-ETH2013$ea_id <- ifelse(is.na(ETH2013$ea_id), ETH2013$ea_id2, ETH2013$ea_id)
-
-# -------------------------------------
-# Some waves of the data have variables
-# that were not available in others.
-# -------------------------------------
-
-# get all name variables that are common to both waves
-good <- Reduce(intersect, list(names(ETH2011), names(ETH2013)))
+# get all name variables that are common to the three waves
+good <- Reduce(intersect, list(names(TZA2010), names(TZA2012)))
 
 # select only those names common in both waves
-ETH2011_2 <- ETH2011[, good]
-ETH2013_2 <- ETH2013[, good]
+TZA2010_2 <- TZA2010[, good]
+TZA2012_2 <- TZA2012[, good]
 
 # new full dataset
-dbP <- rbind(ETH2011_2,ETH2013_2) %>%
-  select(hhid=household_id, indidy=individual_id, everything())
+dbP <- rbind(TZA2010_2, TZA2012_2) %>%
+  dplyr::select(hhid2010, indidy2, hhid2012, indidy3, everything())
 
-rm(good, ETH2011, ETH2011_2, ETH2013, ETH2013_2)
+rm(good, TZA2010, TZA2010_2, TZA2012, TZA2012_2)
+
+# Link pol data
+source(file.path(filePath, "../pol/code/pol20104analysis.R"))
+prez2010 <- rename(prez2010, REGNAME_POL=reg, DISNAME_POL=dis)
+polLink <- read.csv(file.path(filePath, "../pol/data/link_files/lsms2pol.csv"))
+polLink <- rename(polLink, REGNAME=REGNAME_LSMS, DISNAME=DISNAME_LSMS)
+polLink$NOTE <- NULL
 
 # Write file
-saveRDS(dbP, "Cache/Pooled_ETH.rds")
+saveRDS(dbP, "Cache/Pooled_TZA.rds")
 
