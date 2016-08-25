@@ -17,10 +17,9 @@ if(Sys.info()["user"] == "Tomas"){
 
 dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
 #surveyPath <- "W:\\LEI\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData\\"
-wdPath <- "D:\\Dropbox\\Michiel_research\\2285000066 Africa Maize Yield Gap"
+wdPath <- "D:\\Data\\Projects\\OF_TZA"
 setwd(wdPath)
 
-library(plyr)
 library(dplyr)
 library(ggplot2)
 library(stargazer)
@@ -31,7 +30,6 @@ library(sandwich)
 library(lmtest)
 
 source("Analysis/TZA/Code/winsor.R")
-source("Analysis/TZA/Code/waterfall_plot.R")
 
 options(scipen=999)
 
