@@ -12,16 +12,15 @@
 ############## READ DATA ##############
 #######################################
 
-detach(package:dplyr)
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2010PP.r")
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2012PP.r")
+source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2010.r")
+source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2012.r")
 
 
 #######################################
 ############## PACKAGES ETC ###########
 #######################################
 
-wdPath <- "D:\\Dropbox\\Michiel_research\\2285000066 Africa Maize Yield Gap\\Analysis\\TZA\\"
+wdPath <- "D:\\Data\\Projects\\OF_TZA"
 setwd(wdPath)
 
 surveyPath <- "N:\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData"
@@ -58,9 +57,13 @@ TZA2012_2 <- TZA2012[, good]
 dbP <- rbind(TZA2010_2, TZA2012_2) %>%
   dplyr::select(hhid2010, indidy2, hhid2012, indidy3, everything())
 
-
 # Select maize
 dbP <- filter(dbP, crop_code == 11 & status == "HEAD"); rm(TZA2010, TZA2012, TZA2010_2, TZA2012_2)
+
+# Make sure that all plots have a hhid number 
+dbP$hhid <- ifelse(is.na(dbP$hhid2012), dbP$hhid2010, dbP$hhid2012)
+
+# Data per year
 TZA2010 <- filter(dbP, surveyyear == 2010)
 TZA2012 <- filter(dbP, surveyyear == 2012)
 
@@ -77,9 +80,10 @@ fert2010_2 <- read_dta(file.path(surveyPath, "TZA\\2010\\Data\\TZNPS2AGRDTA/AG_S
     dplyr::select(hhid2010=y2_hhid, plotnum, typ=ag3a_53, qty=ag3a_54, vouchfert=ag3a_55, valu=ag3a_56, zaocode) %>%
     mutate(surveyyear = 2010)
 
-key_2010 <- dplyr::select(TZA2010, hhid2010, ZONE, REGNAME, DISCODE, surveyyear) %>% unique() %>% do(filter(., complete.cases(.)))
+# key prepared to add info on ZONE, REGION and DISTRICT
+key_2010 <- dplyr::select(TZA2010, hhid2010, ZONE, REGNAME, DISNAME, surveyyear) %>% unique() %>% do(filter(., complete.cases(.)))
 
-fert2010 <- rbind(fert2010_1, fert2010_2)
+fert2010 <- rbind(fert2010_1, fert2010_2) 
 fert2010[] <- lapply(fert2010, strip_attributes)
 fert2010 <- fert2010 %>% 
   mutate(hhid2010 = as.character(hhid2010)) %>%
@@ -95,9 +99,9 @@ fert2012_2 <- read_dta(file.path(surveyPath, "TZA\\2012\\Data\\AG_SEC_3A.dta")) 
    dplyr::select(hhid2012=y3_hhid, plotnum, typ=ag3a_55, qty=ag3a_56, vouchfert=ag3a_57, valu=ag3a_58, zaocode = ag3a_07_2) %>%
    mutate(surveyyear = 2012)
 
-key_2012 <- dplyr::select(TZA2012, hhid2012, ZONE, REGNAME, DISCODE, surveyyear) %>% unique() %>% do(filter(., complete.cases(.)))
+key_2012 <- dplyr::select(TZA2012, hhid2012, ZONE, REGNAME, DISNAME, surveyyear) %>% unique() %>% do(filter(., complete.cases(.)))
 
-fert2012 <- rbind(fert2012_1, fert2012_2)
+fert2012 <- rbind(fert2012_1, fert2012_2) 
 fert2012[] <- lapply(fert2012, strip_attributes)
 fert2012 <- fert2012 %>% 
   mutate(hhid2012 = as.character(hhid2012)) %>%
@@ -123,371 +127,191 @@ fert <- mutate(fert,
                Qn=qty*n,
                Qp=qty*p,
                price=Vfert/n) 
-       
+
 # Construct price data.frame
-# Construct base dataframe with all zones and regions
-base <- dbP %>%
-  select(ZONE, REGNAME, DISCODE, surveyyear) %>% 
-  distinct() %>%
-  filter(!(ZONE %in% c("ZANZIBAR")) & !is.na(ZONE)) 
+# construct base dataframe with all zones, regions and districts
+
+base <- dbP %>% 
+  dplyr::select(ZONE, REGNAME, DISNAME, surveyyear) %>%
+  unique() %>%
+  na.omit
+
+# Values are winsored by surveyyear, aggregates are presented for at least 5 values
 
 # Remove all na values
-fert <- fert %>% select(ZONE, REGNAME, DISCODE, price, vouchfert, surveyyear) %>%
+fert <- fert %>% select(ZONE, REGNAME, DISNAME, price, vouchfert, surveyyear) %>%
   do(filter(., complete.cases(.)))
 
-# It appears that the same geo-coordinates have households with different region and district codes, which should be impossible. 
-# It also appears that many of these households do not own plots and therefore not contain relevant data.
-# Nonetheless, it raised doubt over the geocodes vs region and district as stated in the survey.
-# For this reason, we calculate the lowest price level not at community level but at district level and built up to zone and country level when there are missing values. and buCheck whether there are multiple ea_id codes with different regions. 
 
-# Values are winsored and aggregates are presented for at least 5 values
-# Mixed (subsidised and non-subsidised prices)
-fertmix <- fert %>%
-            filter(vouchfert %in% c(0,1)) %>%
-            mutate(price = winsor2(price))
+medianPrice_f <- function(df, level, group, type){
+  prices <- df %>% 
+    group_by_(.dots = c(group)) %>%
+    dplyr::summarize(
+      number = sum(!is.na(price)),
+      price = median(price, na.rm=T)) %>%
+    filter(number>=5) %>%
+    mutate(level = level) %>%
+    select(-number) 
+  #prices <- setNames(prices, c(group, "price", "level")) 
+  out <- left_join(base, prices) %>%
+    mutate(type = type)
+  return(out)
+}
 
-pricesCountry <- fertmix %>% 
-  group_by(surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "country")
-
-pricesPerZone <- fertmix %>% 
-  group_by(ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "zone")
-
-pricesPerRegion <- fertmix %>% 
-  group_by(ZONE, REGNAME, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "region")
-
-pricesRegionInter <- fertmix %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(!is.na(price))
-
-pricesZoneInter <- fertmix %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(!is.na(price))
-
-pricesCountryInter <- fertmix %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesCountry)
-  
-pricesPerDistrictmix <- fertmix %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "district") %>%
-  left_join(base, .) %>%
-  filter(!is.na(price) & number>=5) %>%
-  rbind(., pricesCountryInter, pricesZoneInter,pricesRegionInter) %>%
-  ungroup() %>%
-  mutate(product = "fertilizer", type = "Pn")
-
-rm(pricesCountry, pricesPerZone, pricesPerRegion, pricesCountryInter, pricesZoneInter, pricesRegionInter)
 
 # market  prices
 fertmar <- fert %>%
   filter(vouchfert %in% c(0)) %>%
+  group_by(surveyyear) %>%
   mutate(price = winsor2(price))
 
-pricesCountry <- fertmar %>% 
-  filter(!is.na(REGNAME)) %>% 
+fpCountry <- fertmar %>%
   group_by(surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "country")
+  dplyr::summarize(price = median(price, na.rm=T)) %>%
+  mutate(level = "country") 
+fpCountry <- mutate(base, price = fpCountry$price,
+                    level = "country",
+                    type = "Pm")
 
-pricesPerZone <- fertmar %>% 
-  group_by(ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "zone")
+fpZone <- medianPrice_f(fertmar, "zone", c("surveyyear", "ZONE"), "Pm")
+fpRegion <- medianPrice_f(fertmar, "region", c("surveyyear", "ZONE", "REGNAME"), "Pm")
+fpDistrict <- medianPrice_f(fertmar, "district", c("surveyyear", "ZONE", "REGNAME", "DISNAME"), "Pm")
 
-pricesPerRegion <- fertmar %>% 
-  group_by(ZONE, REGNAME, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "region")
+fertMarPrice <- bind_rows(fpDistrict, fpRegion, fpZone, fpCountry) %>%
+  na.omit %>%
+  spread(level, price) %>%
+  mutate(regPrice = ifelse(!is.na(district), district, 
+                        ifelse(!is.na(region), region,
+                               ifelse(!is.na(zone), zone, country))),
+         source = ifelse(!is.na(district), "district", 
+                         ifelse(!is.na(region), "region",
+                                ifelse(!is.na(zone), "zone", "country"))),
+         product = "fertilizer") %>%
+  select(-country, -zone, -region, -district)
 
-pricesRegionInter <- fertmar %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(!is.na(price))
+rm(fpCountry, fpZone, fpRegion, fpDistrict, fertmar)
 
-pricesZoneInter <- fertmar %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(!is.na(price))
+# Market and subsidised prices
+fertmix <- fert %>%
+  filter(vouchfert %in% c(0,1)) %>%
+  group_by(surveyyear) %>%
+  mutate(price = winsor2(price))
 
-pricesCountryInter <- fertmar %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesCountry)
+fpCountry <- fertmix %>%
+  group_by(surveyyear) %>%
+  dplyr::summarize(price = median(price, na.rm=T)) %>%
+  mutate(level = "country") 
+fpCountry <- mutate(base, price = fpCountry$price,
+                    level = "country",
+                    type = "Pn")
 
-pricesPerDistrictmar <- fertmar %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "district") %>%
-  left_join(base, .) %>%
-  filter(!is.na(price) & number>=5) %>%
-  rbind(., pricesCountryInter, pricesZoneInter,pricesRegionInter) %>%
-  ungroup() %>%
-  mutate(product = "fertilizer", type = "Pnns")
+fpZone <- medianPrice_f(fertmix, "zone", c("surveyyear", "ZONE"), "Pn")
+fpRegion <- medianPrice_f(fertmix, "region", c("surveyyear", "ZONE", "REGNAME"), "Pn")
+fpDistrict <- medianPrice_f(fertmix, "district", c("surveyyear", "ZONE", "REGNAME", "DISNAME"), "Pn")
 
-rm(pricesCountry, pricesPerZone, pricesPerRegion, pricesCountryInter, pricesZoneInter, pricesRegionInter)
+fertMixPrice <- bind_rows(fpDistrict, fpRegion, fpZone, fpCountry) %>%
+  na.omit %>%
+  spread(level, price) %>%
+  mutate(regPrice = ifelse(!is.na(district), district, 
+                        ifelse(!is.na(region), region,
+                               ifelse(!is.na(zone), zone, country))),
+         source = ifelse(!is.na(district), "district", 
+                         ifelse(!is.na(region), "region",
+                                ifelse(!is.na(zone), "zone", "country"))),
+         product = "fertilizer") %>%
+  select(-country, -zone, -region, -district)
 
-# Subsidised prices 
+rm(fpCountry, fpZone, fpRegion, fpDistrict, fertmix)
+
+# Subsidised prices
 fertsub <- fert %>%
   filter(vouchfert %in% c(1)) %>%
+  group_by(surveyyear) %>%
   mutate(price = winsor2(price))
 
-pricesCountry <- fertsub %>% 
-  filter(!is.na(REGNAME)) %>% 
+fpCountry <- fertsub %>%
   group_by(surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "country")
+  dplyr::summarize(price = median(price, na.rm=T)) %>%
+  mutate(level = "country") 
+fpCountry <- mutate(base, price = fpCountry$price,
+                    level = "country",
+                    type = "Pns")
 
-pricesPerZone <- fertsub %>% 
-  group_by(ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "zone")
+fpZone <- medianPrice_f(fertsub, "zone", c("surveyyear", "ZONE"), "Pns")
+fpRegion <- medianPrice_f(fertsub, "region", c("surveyyear", "ZONE", "REGNAME"), "Pns")
+fpDistrict <- medianPrice_f(fertsub, "district", c("surveyyear", "ZONE", "REGNAME", "DISNAME"), "Pns")
 
-pricesPerRegion <- fertsub %>% 
-  group_by(ZONE, REGNAME, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "region")
+fertSubPrice <- bind_rows(fpDistrict, fpRegion, fpZone, fpCountry) %>%
+  na.omit %>%
+  spread(level, price) %>%
+  mutate(regPrice = ifelse(!is.na(district), district, 
+                        ifelse(!is.na(region), region,
+                               ifelse(!is.na(zone), zone, country))),
+         source = ifelse(!is.na(district), "district", 
+                         ifelse(!is.na(region), "region",
+                                ifelse(!is.na(zone), "zone", "country"))),
+         product = "fertilizer") %>%
+  select(-country, -zone, -region, -district)
 
-pricesRegionInter <- fertsub %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(!is.na(price))
-
-pricesZoneInter <- fertsub %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(!is.na(price))
-
-pricesCountryInter <- fertsub %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesCountry)
-
-pricesPerDistrictsub <- fertsub %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "district") %>%
-  left_join(base, .) %>%
-  filter(!is.na(price) & number>=5) %>%
-  rbind(., pricesCountryInter, pricesZoneInter,pricesRegionInter) %>%
-  ungroup() %>%
-  mutate(product = "fertilizer", type = "Pns")
-
-rm(pricesCountry, pricesPerZone, pricesPerRegion, pricesCountryInter, pricesZoneInter, pricesRegionInter)
+rm(fpCountry, fpZone, fpRegion, fpDistrict, fertsub)
 
 # Maize prices
-# Values are winsored and aggregates are presented for at least 5 values and imputed using higher level values.
-# Note that for more ea maize prices are available. We use base for fert as we need both pieces of information.
-
-maizePrices <- dbP %>% 
-  dplyr::select(ZONE, REGNAME, DISCODE, surveyyear, price = crop_price) %>%
-  filter(!(ZONE %in% c("ZANZIBAR")) & !is.na(ZONE)) %>%
+maize <- dbP %>% 
+  dplyr::select(ZONE, REGNAME, DISNAME, surveyyear, price = crop_price) %>%
   mutate(price = winsor2(price))
 
-pricesCountry <- maizePrices %>% 
-  filter(!is.na(REGNAME)) %>% 
+fpCountry <- maize %>%
   group_by(surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
+  dplyr::summarize(price = median(price, na.rm=T)) %>%
   mutate(level = "country")
+fpCountry <- mutate(base, price = fpCountry$price,
+                    level = "country",
+                    type = "Pc") 
 
-pricesPerZone <-maizePrices  %>% 
-  group_by(ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "zone")
+fpZone <- medianPrice_f(maize, "zone", c("surveyyear", "ZONE"), "Pc")
+fpRegion <- medianPrice_f(maize, "region", c("surveyyear", "ZONE", "REGNAME"), "Pc")
+fpDistrict <- medianPrice_f(maize, "district", c("surveyyear", "ZONE", "REGNAME", "DISNAME"), "Pc")
 
-pricesPerRegion <- maizePrices  %>% 
-  group_by(ZONE, REGNAME, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  filter(number >= 5) %>%
-  mutate(level = "region")
+maizePrice <- bind_rows(fpDistrict, fpRegion, fpZone, fpCountry) %>%
+  na.omit %>%
+  spread(level, price) %>%
+  mutate(regPrice = ifelse(!is.na(district), district, 
+                        ifelse(!is.na(region), region,
+                               ifelse(!is.na(zone), zone, country))),
+         source = ifelse(!is.na(district), "district", 
+                         ifelse(!is.na(region), "region",
+                                ifelse(!is.na(zone), "zone", "country"))),
+         product = "maize") %>%
+  select(-country, -zone, -region, -district)
 
-pricesRegionInter <- maizePrices %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(!is.na(price))
+rm(fpCountry, fpZone, fpRegion, fpDistrict, fertsub)
 
-pricesZoneInter <- maizePrices  %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(!is.na(price))
+# Combine fert price data files 
+regPrice <- bind_rows(fertMixPrice, fertMarPrice, fertSubPrice, maizePrice) %>% ungroup
+  
 
-pricesCountryInter <- maizePrices  %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  left_join(base, .) %>%
-  filter(is.na(price) | number<5) %>%
-  dplyr::select(-number, -price) %>%
-  left_join(., pricesPerRegion) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesPerZone) %>%
-  filter(is.na(price)) %>%
-  dplyr::select(-number, -price, -level) %>%
-  left_join(., pricesCountry)
-
-maizePricesPerDistrict <- maizePrices %>%
-  group_by(DISCODE, REGNAME, ZONE, surveyyear) %>%
-  dplyr::summarize(
-    number = sum(!is.na(price)),
-    price = mean(price, na.rm=T)) %>%
-  mutate(level = "district") %>%
-  left_join(base, .) %>%
-  filter(!is.na(price) & number>=5) %>%
-  rbind(., pricesCountryInter, pricesZoneInter,pricesRegionInter) %>%
-  ungroup() %>%
-  mutate(product = "maize", type = "Pm")
-
-rm(pricesCountry, pricesPerZone, pricesPerRegion, pricesCountryInter, pricesZoneInter, pricesRegionInter)
-
-# combine price data
-Prices <- rbind(pricesPerDistrictmar, pricesPerDistrictmix, pricesPerDistrictsub, maizePricesPerDistrict) %>%
-          mutate(surveyyear = as.factor(surveyyear)) %>%
-          droplevels(.)
-
-#check <- Prices %>% select(-product, - level, -number) %>% spread(type, price)
-
-saveRDS(Prices, file = "Data\\Prices.rds")
+# Create price file at plot level.
+# Again, we winsor the prices for each type of price and per surveyyear
+plotPrice <- select(dbP, hhid, plotnum, ZONE, REGNAME, DISNAME, surveyyear, Pn = WPn, Pns = WPnsub, Pm = WPnnosub, Pc = crop_price) %>%
+  gather(type, plotPrice, Pn, Pns, Pm, Pc) %>%
+  group_by(type, surveyyear) %>%
+  mutate(plotPrice =winsor2(plotPrice)) %>%
+  ungroup() %>% unique
 
 
-ggplot(data = Prices) + geom_boxplot(aes(x = price)) + facet_wrap(~ZONE)
+# Substitute regional prices when plot level price is not available
+price <- left_join(plotPrice, regPrice) %>%
+          mutate(price = ifelse(is.na(plotPrice), regPrice, plotPrice)) %>%
+          unique() %>% # should not be necessary but never know
+          select(-source, -regPrice, -plotPrice, -product) %>%
+          spread(type, price)
+
+
+# Plot
+ggplot(data = Prices) + geom_boxplot(aes(x = surveyyear, y = price)) + facet_wrap(~ZONE)
+summary(price)
+
+# save data
+saveRDS(price, "Cache/GHA_prices.rds")
+
+
