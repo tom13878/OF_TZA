@@ -2,18 +2,15 @@
 ###### ANALYSIS of TZA price data #####
 #######################################
 
-# CHECK
-# Median of prices
-# Compute community prices!
-# Compare prices with other prices and check if they are realistic!
+# CHECK Compare prices with other prices and check if they are realistic!
 
 
 #######################################
 ############## READ DATA ##############
 #######################################
 
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2010.r")
-source("N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/Code/TZA/TZA_2012.r")
+source("D:/Data/Projects/OF_TZA/Code/TZA_2010.r")
+source("D:/Data/Projects/OF_TZA/Code/TZA_2012.r")
 
 
 #######################################
@@ -128,6 +125,8 @@ fert <- mutate(fert,
                Qp=qty*p,
                price=Vfert/n) 
 
+table(fert$typ)
+
 # Construct price data.frame
 # construct base dataframe with all zones, regions and districts
 
@@ -171,11 +170,11 @@ fpCountry <- fertmar %>%
   mutate(level = "country") 
 fpCountry <- mutate(base, price = fpCountry$price,
                     level = "country",
-                    type = "Pm")
+                    type = "Pnm")
 
-fpZone <- medianPrice_f(fertmar, "zone", c("surveyyear", "ZONE"), "Pm")
-fpRegion <- medianPrice_f(fertmar, "region", c("surveyyear", "ZONE", "REGNAME"), "Pm")
-fpDistrict <- medianPrice_f(fertmar, "district", c("surveyyear", "ZONE", "REGNAME", "DISNAME"), "Pm")
+fpZone <- medianPrice_f(fertmar, "zone", c("surveyyear", "ZONE"), "Pnm")
+fpRegion <- medianPrice_f(fertmar, "region", c("surveyyear", "ZONE", "REGNAME"), "Pnm")
+fpDistrict <- medianPrice_f(fertmar, "district", c("surveyyear", "ZONE", "REGNAME", "DISNAME"), "Pnm")
 
 fertMarPrice <- bind_rows(fpDistrict, fpRegion, fpZone, fpCountry) %>%
   na.omit %>%
@@ -292,8 +291,8 @@ regPrice <- bind_rows(fertMixPrice, fertMarPrice, fertSubPrice, maizePrice) %>% 
 
 # Create price file at plot level.
 # Again, we winsor the prices for each type of price and per surveyyear
-plotPrice <- select(dbP, hhid, plotnum, ZONE, REGNAME, DISNAME, surveyyear, Pn = WPn, Pns = WPnsub, Pm = WPnnosub, Pc = crop_price) %>%
-  gather(type, plotPrice, Pn, Pns, Pm, Pc) %>%
+plotPrice <- select(dbP, hhid, plotnum, ZONE, REGNAME, DISNAME, surveyyear, Pn = WPn, Pns = WPnsub, Pnm = WPnnosub, Pc = crop_price) %>%
+  gather(type, plotPrice, Pn, Pns, Pnm, Pc) %>%
   group_by(type, surveyyear) %>%
   mutate(plotPrice =winsor2(plotPrice)) %>%
   ungroup() %>% unique
@@ -308,10 +307,10 @@ price <- left_join(plotPrice, regPrice) %>%
 
 
 # Plot
-ggplot(data = Prices) + geom_boxplot(aes(x = surveyyear, y = price)) + facet_wrap(~ZONE)
+ggplot(data = as.data.frame(price), aes(x = surveyyear, y = Pns)) + geom_boxplot() + facet_wrap(~ZONE)
 summary(price)
 
 # save data
-saveRDS(price, "Cache/GHA_prices.rds")
+saveRDS(price, "Cache/TZA_prices.rds")
 
 
