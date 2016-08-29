@@ -3,11 +3,16 @@
 # for analysis later
 # -------------------------------------
 
+if(Sys.info()["user"] == "Tomas"){
+  dataPath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/"
+} else {
+  dataPath <- "D:/Data/Projects/OF_TZA" 
+}
+
 library(dplyr)
 library(reshape2)
 
-dataPath <- "D:/Data/Projects/OF_TZA" 
-prez2010 <- readRDS(file.path(dataPath, "Data/prez2010/prez2010.rds"))
+prez2010 <- readRDS(file.path(dataPath, "data/prez2010/prez2010.rds"))
 
 # In many places there are Swahili names
 # we remove this part of the name
@@ -74,18 +79,3 @@ prez2010_dis <- group_by(prez2010_dis, reg, dis) %>%
 prez2010 <- left_join(prez2010_dis, prez2010_dis_All)
 
 rm(prez2010_dis, prez2010_dis_All, urban, dataPath, dar)
-
-# save the results for use in analysis later
-# saveRDS(prez2010_dis_All, file.path(dataPath, "data/prez2010/prez2010_dis_All.rds"))
-# saveRDS(prez2010_dis, file.path(dataPath, "data/prez2010/prez2010_dis.rds"))
-
-# constituency code - in case it's possible to make
-# a link later on.
-
-# summarise the data by constituency
-# prez2010_con <- group_by(prez2010, reg, dis, con) %>% 
-#   summarise(ccm_prez10=ifelse(party[which.max(votes)] %in% "CCM", 1, 0),
-#             split_prez10=ifelse(length(party) == 1, ifelse(is.na(perc), 100, perc),
-#                                abs(perc[party %in% "CCM"] - max(perc[!party %in% "CCM"],
-#                                                                 na.rm=TRUE))))
-

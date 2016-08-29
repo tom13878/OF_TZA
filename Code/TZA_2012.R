@@ -4,11 +4,11 @@
 
 if(Sys.info()["user"] == "Tomas"){
   dataPath <- "C:/Users/Tomas/Documents/LEI/data/TZA/2012/Data"
+  geoPath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/Cache"
 } else {
   dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/TZA/2012/Data"
+  geoPath <- "D:/Data/Projects/OF_TZA/Cache"
 }
-
-geoPath <- "D:/Data/Projects/OF_TZA/Cache"
 
 # load packages
 library(haven)

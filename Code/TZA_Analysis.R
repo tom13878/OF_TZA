@@ -9,16 +9,16 @@ if(Sys.info()["user"] == "Tomas"){
   filePath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/"
 } else {
   filePath <- "D:/Data/Projects/OF_TZA/"
+  dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
+  #surveyPath <- "W:\\LEI\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData\\"
+  wdPath <- "D:\\Data\\Projects\\OF_TZA"
+  setwd(wdPath)
 }
 
 #######################################
 ############## PACKAGES ETC ###########
 #######################################
 
-dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
-#surveyPath <- "W:\\LEI\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData\\"
-wdPath <- "D:\\Data\\Projects\\OF_TZA"
-setwd(wdPath)
 
 library(dplyr)
 library(ggplot2)
@@ -40,6 +40,56 @@ options(scipen=999)
 
 dbP <- readRDS("Cache/Pooled_TZA.rds")
 
+#######################################
+############## CLEANING ###############
+#######################################
+
+# Select maize
+dbP <- filter(dbP, crop_code == 11 & status == "HEAD"); #rm(TZA2010, TZA2012, TZA2010_2, TZA2012_2) 
+
+# Create rel_harv_area variable
+dbP$area_farmer[dbP$area_farmer %in% 0] <- NA
+dbP$harv_area[dbP$harv_area %in% 0] <- NA
+
+dbP <- dbP %>% 
+  mutate( sh_harv_area = harv_area/area_farmer,
+          sh_harv_area = ifelse(sh_harv_area >1, 1, sh_harv_area), # for some farmers the harvested area > plot size. Set to 1
+          rel_harv_area = sh_harv_area * area_gps)
+
+
+# Create id for plots
+dbP <- dbP %>% 
+  mutate(id=1:dim(.)[1]) 
+
+
+# Cleaning and analysis depends strongly on which measure is chosen for area, which is the denominator for many variables.
+# there are three possible yield variables. 
+# that can be created for the last two waves of data. 
+# 1. yld1: above uses the full gps areas as denominator
+# 2. yld2: uses harvested area as denominator
+# 3. yld3: Uses relative harvest area to correct gps area
+# To simplify the code we set these values in this part. Subsequent analysis code can then be used for any definition of yield.
+
+# We choose area_gps as this is the variable used by other comparable studies
+dbP <- dbP %>% 
+  mutate(area = area_gps, 
+         yld = crop_qty_harv/area,
+         N = N/area)
+
+
+# Remove Zanzibar
+dbP <- filter(dbP, !(ZONE %in% c("ZANZIBAR")))
+
+# cap yield at 16040 kg/ha, the highest potential yield in TZA (not water limited)
+dbP <- filter(dbP, yld <=16040)
+
+# Sample includes very small plots <0.005 ha that bias result upwards and very large >35 ha. 
+# As we focus on small scale farmers we restrict area size
+dbP <- filter(dbP, area_gps >=0.05 & area_gps <=10)
+
+# restrict attention to plots that use N < 1000. There large outliers that are removed.
+dbP <- dplyr::filter(dbP, N < 1000)
+
 
 ######################################
 ##### Get plot specific pricess ######
@@ -48,6 +98,7 @@ dbP <- readRDS("Cache/Pooled_TZA.rds")
 # Read price data
 prices <- readRDS("Cache/TZA_prices.rds")
 db0 <- left_join(dbP, prices)
+
 
 ######################################
 ######## Modify and add variables ####
@@ -153,12 +204,6 @@ db0 <- db0 %>%
 # Drop unused levels (e.g. Zanzibar in zone), which are giving problems with sfa
 db0 <- droplevels(db0)
 
-# add political variables
-# Merge the db0 database (LSMS) with the link file
-db0 <- left_join(db0, polLink)
-
-# merge the db0 database (LSMS) with the political results (from NEC)
-db0 <- left_join(db0, prez2010)
 
 #######################################
 ############## ANALYSIS ###############
@@ -219,7 +264,7 @@ stargazer(N_dem, type = "text", intercept.bottom = FALSE, digits = 2, digits.ext
 # N is only used in several regions. We run regressions for the whole country and regions where fertilizer is used (see Nuse above).
 
 # Interaction terms for soil constraints, P values and others
-OLS0 <- lm(yld ~ N + N2 + N:P +
+OLS0 <- lm(yld ~ N + N2 + 
              logasset + lab + area + 
              hybrd + manure + pest + legume +
              soil + 
@@ -321,6 +366,11 @@ OLS3 <- lm(yld ~  N:P +
 robust3  <- coeftest(OLS3, vcov = vcovHC(OLS3, type="HC1")) 
 ses3 <- robust3[, 2]
 pvals3 <- robust3[, 4]
+
+
+stargazer(OLS1, OLS2, OLS3, type = "text", 
+          p = list(pvals1, pvals2, pvals3), se = list(ses1, ses2, ses3),
+          intercept.bottom = FALSE, digits = 2, digits.extra = 2)
 
 
 OLS4 <- lm(yld ~  
