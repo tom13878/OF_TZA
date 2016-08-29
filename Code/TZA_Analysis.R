@@ -300,12 +300,12 @@ OLS1 <- lm(yld ~ N + N2 + N:P +
              N:SOC2 + N:phdum2 +
              rain_wq + I(rain_wq*rain_wq) +
              logasset + lab + area + 
-             hybrd + manure + pest + legume +
+             hybrd + manure + pest + 
              elevation + slope +
              crop_count + surveyyear2 +  
              REGNAME +
              N_bar + logasset_bar +  lab_bar + area_bar + 
-             hybrd_bar + manure_bar + pest_bar +  legume_bar +
+             hybrd_bar + manure_bar + pest_bar +  
              soilSandy_bar + soilLoam_bar + soilClay_bar + soilOther_bar +
              rain_wq_bar + crop_count_bar +
              omega
@@ -319,17 +319,17 @@ pvals1 <- robust1[, 4]
 
 
 OLS2 <- lm(yld ~ N + N2 + N:P +
-             N:soil + N:fs +
-             N:SOC2 + N:phdum2 +
+             N:soil + N:fs + N:fs2 +
+             #N:SOC2 + N:phdum2 +
              hybrd:N +
              rain_wq + I(rain_wq*rain_wq) +
              logasset + lab + area + 
-             hybrd + manure + pest + legume +
+             hybrd + manure + pest + 
              elevation + slope +
              crop_count + surveyyear2 +  
              REGNAME +
              N_bar + logasset_bar +  lab_bar + area_bar + 
-             hybrd_bar + manure_bar + pest_bar +  legume_bar +
+             hybrd_bar + manure_bar + pest_bar +  
              soilSandy_bar + soilLoam_bar + soilClay_bar + soilOther_bar +
              rain_wq_bar + crop_count_bar +
              omega
@@ -351,12 +351,12 @@ OLS3 <- lm(yld ~  N:P +
              N:hybrd + 
              N:rain_wq + N:I(rain_wq*rain_wq) +
              asset + I(asset*asset)+ lab + I(lab*lab) + area + I(area*area) + 
-             hybrd + manure + pest + legume +
+             hybrd + manure + pest + 
              elevation + slope +
              crop_count + surveyyear2 +  
              REGNAME +
              N_bar + logasset_bar +  lab_bar + area_bar + 
-             hybrd_bar + manure_bar + pest_bar +  legume_bar +
+             hybrd_bar + manure_bar + pest_bar +  
              soilSandy_bar + soilLoam_bar + soilClay_bar + soilOther_bar +
              rain_wq_bar + crop_count_bar +
              omega
@@ -381,12 +381,12 @@ OLS4 <- lm(yld ~
              N:hybrd + 
              N:rain_wq + N:I(rain_wq*rain_wq) +
              asset + I(asset*asset)+ lab + I(lab*lab) + area + I(area*area) + 
-             hybrd + manure + pest + legume +
+             hybrd + manure + pest + 
              elevation + slope +
              crop_count + surveyyear2 +  
              REGNAME +
              N_bar + logasset_bar +  lab_bar + area_bar + 
-             hybrd_bar + manure_bar + pest_bar +  legume_bar +
+             hybrd_bar + manure_bar + pest_bar +  
              soilSandy_bar + soilLoam_bar + soilClay_bar + soilOther_bar +
              rain_wq_bar + crop_count_bar +
              omega
@@ -397,58 +397,60 @@ robust4  <- coeftest(OLS4, vcov = vcovHC(OLS4, type="HC1"))
 ses4 <- robust4[, 2]
 pvals4 <- robust4[, 4]
 
-stargazer(OLS3, OLS4, type = "text", 
-          p = list(pvals3, pvals4), se = list(ses3, ses4),
-          intercept.bottom = FALSE, digits = 2, digits.extra = 2)
 
-
-
-OLS5 <- lm(yld ~  
-             N + P +  asset + lab + area + rain_wq + ph2 + SOC2 + elevation + slope +
-             N2 + I(asset*asset)+ I(lab*lab) + I(area*area) + I(rain_wq*rain_wq) + I(ph2*ph2) + I(SOC2*SOC2) + I(elevation*elevation) + I(slope*slope) +
-             N:P + N:asset + N:lab + N:area + N:rain_wq + N:ph2 + N:SOC2 + N:elevation + N:slope +
-             N:soil + soil +
-             N:fs + fs + 
-             N:SOC2 + N:phdum2 + 
-             N:hybrd + hybrd + 
-             N:manure + manure + pest + N:pest + legume + N:legume +
+OLS5 <- lm(yld ~  N:P +
+             #N:soil + 
+             N:fs + N2:fs +
+             N:SOC2 + 
+             N:phdum2 + 
+             N:hybrd + 
+             N:rain_wq + N:I(rain_wq*rain_wq) +
+             asset + I(asset*asset)+ lab + I(lab*lab) + area + I(area*area) + 
+             hybrd + manure + pest + 
+             elevation + slope +
              crop_count + surveyyear2 +  
              REGNAME +
              N_bar + logasset_bar +  lab_bar + area_bar + 
-             hybrd_bar + manure_bar + pest_bar +  legume_bar +
-             soilSandy_bar + soilLoam_bar + soilClay_bar + soilOther_bar +
+             hybrd_bar + manure_bar + pest_bar +  
              rain_wq_bar + crop_count_bar +
              omega
            ,data = db0)
+
 
 # Adjust se en p
 robust5  <- coeftest(OLS5, vcov = vcovHC(OLS5, type="HC1")) 
 ses5 <- robust5[, 2]
 pvals5 <- robust5[, 4]
 
-stargazer(OLS5, type = "text", 
-          p = list(pvals5), se = list(ses5),
+
+
+OLS6 <- lm(yld ~  N + N2 + N:P+
+             N:soil + 
+             N:SOC2 + 
+             N:phdum2 + 
+             N:hybrd + 
+             N:rain_wq + N:I(rain_wq*rain_wq) +
+             asset + I(asset*asset)+ lab + I(lab*lab) + area + I(area*area) + 
+             hybrd + manure + pest + 
+             elevation + slope +
+             crop_count + surveyyear2 +  
+             REGNAME +
+             N_bar + logasset_bar +  lab_bar + area_bar + 
+             hybrd_bar + manure_bar + pest_bar +  
+             rain_wq_bar + crop_count_bar +
+             omega
+           ,data = db0)
+
+
+# Adjust se en p
+robust6  <- coeftest(OLS6, vcov = vcovHC(OLS6, type="HC1")) 
+ses6 <- robust6[, 2]
+pvals6 <- robust6[, 4]
+
+stargazer(OLS2, OLS3, OLS4, OLS5, OLS6, type = "text", 
+          p = list(pvals2, pvals3, pvals4, pvals5, pvals6), se = list(ses2, ses3, ses4, ses5, ses6),
           intercept.bottom = FALSE, digits = 2, digits.extra = 2)
 
-
-# Regressions per agricultural system
-
-unique(db0$fs)
-hp <- filter(db0, fs == "Highland perennial")
-af <- filter(db0, fs == "Artisanal fishing")
-ap <- filter(db0, fs == "Agro-pastoral")
-ir <- filter(db0, fs == "Irrigated")
-rt <- filter(db0, fs == "Root and tuber crop")
-mm <- filter(db0, fs == "Maize mixed")
-
-db0 %>%
-  filter(fs %in% c("Maize mixed")) %>%
-  split(.$fs) %>%
-  map(~lm(form, data = .)) %>%
-  map(summary)
-
-%>%
-  map_dbl("r.squared")
 
 #################################
 ### BOOTSTRAP STANDARD ERRORS ###
