@@ -12,7 +12,6 @@ if(Sys.info()["user"] == "Tomas"){
 } else {
   filePath <- "D:/Data/Projects/OF_TZA/"
   dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
-  #surveyPath <- "W:\\LEI\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData\\"
   wdPath <- "D:\\Data\\Projects\\OF_TZA"
   setwd(wdPath)
 }
