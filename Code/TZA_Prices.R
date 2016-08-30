@@ -172,9 +172,9 @@ fpCountry <- fertmar %>%
   group_by(surveyyear) %>%
   dplyr::summarize(price = median(price, na.rm=T)) %>%
   mutate(level = "country") 
-fpCountry <- mutate(base, price = fpCountry$price,
-                    level = "country",
-                    type = "Pnm")
+fpCountry <- left_join(base, fpCountry) %>%
+  mutate(type = "Pnm")
+
 
 fpZone <- medianPrice_f(fertmar, "zone", c("surveyyear", "ZONE"), "Pnm")
 fpRegion <- medianPrice_f(fertmar, "region", c("surveyyear", "ZONE", "REGNAME"), "Pnm")
@@ -204,9 +204,8 @@ fpCountry <- fertmix %>%
   group_by(surveyyear) %>%
   dplyr::summarize(price = median(price, na.rm=T)) %>%
   mutate(level = "country") 
-fpCountry <- mutate(base, price = fpCountry$price,
-                    level = "country",
-                    type = "Pn")
+fpCountry <- left_join(base, fpCountry) %>%
+  mutate(type = "Pn")
 
 fpZone <- medianPrice_f(fertmix, "zone", c("surveyyear", "ZONE"), "Pn")
 fpRegion <- medianPrice_f(fertmix, "region", c("surveyyear", "ZONE", "REGNAME"), "Pn")
@@ -236,9 +235,9 @@ fpCountry <- fertsub %>%
   group_by(surveyyear) %>%
   dplyr::summarize(price = median(price, na.rm=T)) %>%
   mutate(level = "country") 
-fpCountry <- mutate(base, price = fpCountry$price,
-                    level = "country",
-                    type = "Pns")
+fpCountry <- left_join(base, fpCountry) %>%
+  mutate(type = "Pns")
+                    
 
 fpZone <- medianPrice_f(fertsub, "zone", c("surveyyear", "ZONE"), "Pns")
 fpRegion <- medianPrice_f(fertsub, "region", c("surveyyear", "ZONE", "REGNAME"), "Pns")
@@ -267,9 +266,8 @@ fpCountry <- maize %>%
   group_by(surveyyear) %>%
   dplyr::summarize(price = median(price, na.rm=T)) %>%
   mutate(level = "country")
-fpCountry <- mutate(base, price = fpCountry$price,
-                    level = "country",
-                    type = "Pc") 
+fpCountry <- left_join(base, fpCountry) %>%
+  mutate(type = "Pc")
 
 fpZone <- medianPrice_f(maize, "zone", c("surveyyear", "ZONE"), "Pc")
 fpRegion <- medianPrice_f(maize, "region", c("surveyyear", "ZONE", "REGNAME"), "Pc")
@@ -311,7 +309,7 @@ price <- left_join(plotPrice, regPrice) %>%
 
 
 # Plot
-ggplot(data = as.data.frame(price), aes(x = surveyyear, y = Pns)) + geom_boxplot() + facet_wrap(~ZONE)
+ggplot(data = as.data.frame(price), aes(x = factor(surveyyear), y = Pns)) + geom_boxplot() + facet_wrap(~ZONE)
 summary(price)
 
 # save data
