@@ -7,6 +7,7 @@
 # file path decision: Michiel or Tom
 if(Sys.info()["user"] == "Tomas"){
   filePath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/"
+  dataPath <- "C:/users/tomas/documents/lei/data"
   wdPath <- "c:/users/tomas/documents/lei/OF_TZA"
   setwd(wdPath)
 } else {
@@ -115,7 +116,7 @@ db0 <- db0 %>%
                 SOC, SOC2, ph, ph2, RootDepth, 
                 slope, elevation, nut, nrc, fs,
                 rain_year, rain_wq, 
-                rural, area_gps, lat, lon) %>%
+                rural, area_gps, lat, lon, split_prez10) %>%
   do(filter(., complete.cases(.)))
 
 # Following Burke
@@ -225,7 +226,7 @@ db0 <- droplevels(db0)
 
 # NB MODEL IS VERY SENSITIVE TO DUMMIES/MULTICOLINEARITY?!
 N_dem <- tobit(N ~ 
-                      #split_prez10 + 
+                      split_prez10 + 
                       logasset + lab + area + hybrd +
                       manure + pest + legume + soil +
                       SOC2 + phdum2 + 
@@ -252,17 +253,27 @@ APE <- (1/n) * sum(pnorm(((X %*% coef(N_dem)))/sigma, 0, 1))
 # which can then be incorporated into the 
 # next stage of the analysis
 db0$omega <- residuals(N_dem)
+newcoefs <- coef(N_dem)*APE
 
-stargazer(N_dem, type = "text", intercept.bottom = FALSE, digits = 2, digits.extra = 2)
+# stargazer will use the new values (i.e. the APE's)
+# to calcuate test stats and p-values unless turned off
+# using p.auto=FALSE and t.auto=FALSE
+
+stargazer(N_dem, coef=list(newcoefs), t.auto=FALSE, p.auto=FALSE,
+          type = "text", intercept.bottom = FALSE, digits = 2,
+          digits.extra = 2)
 
 ######################################################
 ### SECOND STAGE ANALYSIS: YIELD RESPONSE FUNCTION ###
 ######################################################
 
 # Yield response function estimation
-# NB it appears that there is only limited variation between SOC2 and phdum2=1 and AEZ2 so phdum21 drops out.
-# Cannot introduce too many interaction terms with N because of limited N application and variability.
-# N is only used in several regions. We run regressions for the whole country and regions where fertilizer is used (see Nuse above).
+# NB it appears that there is only limited variation between SOC2
+# and phdum2=1 and AEZ2 so phdum21 drops out. Cannot introduce too
+# many interaction terms with N because of limited N application and
+# variability.
+# N is only used in several regions. We run regressions for the
+# whole country and regions where fertilizer is used (see Nuse above).
 
 # Interaction terms for soil constraints, P values and others
 OLS0 <- lm(yld ~ N + N2 + 
