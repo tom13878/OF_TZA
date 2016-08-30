@@ -7,10 +7,11 @@
 # file path decision: Michiel or Tom
 if(Sys.info()["user"] == "Tomas"){
   filePath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/"
+  wdPath <- "c:/users/tomas/documents/lei/OF_TZA"
+  setwd(wdPath)
 } else {
   filePath <- "D:/Data/Projects/OF_TZA/"
   dataPath <- "N:/Internationaal Beleid  (IB)/Projecten/2285000066 Africa Maize Yield Gap/SurveyData/"
-  #surveyPath <- "W:\\LEI\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData\\"
   wdPath <- "D:\\Data\\Projects\\OF_TZA"
   setwd(wdPath)
 }
