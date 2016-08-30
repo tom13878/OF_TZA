@@ -2,6 +2,17 @@
 ###### ANALYSIS of TZA price data #####
 #######################################
 
+# file path decision: Michiel or Tom
+if(Sys.info()["user"] == "Tomas"){
+  wdPath <- "C:/Users/Tomas/Documents/LEI/OF_TZA/"
+  setwd(wdPath)
+  surveyPath <- "C:/Users/Tomas/Documents/LEI/data"
+} else {
+  wdPath <- "D:\\Data\\Projects\\OF_TZA"
+  setwd(wdPath)
+  surveyPath <- "N:\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData"
+}
+
 # CHECK Compare prices with other prices and check if they are realistic!
 
 
@@ -9,20 +20,13 @@
 ############## READ DATA ##############
 #######################################
 
-source("D:/Data/Projects/OF_TZA/Code/TZA_2010.r")
-source("D:/Data/Projects/OF_TZA/Code/TZA_2012.r")
-
+source("Code/TZA_2010.r")
+source("Code/TZA_2012.r")
 
 #######################################
 ############## PACKAGES ETC ###########
 #######################################
 
-wdPath <- "D:\\Data\\Projects\\OF_TZA"
-setwd(wdPath)
-
-surveyPath <- "N:\\Internationaal Beleid  (IB)\\Projecten\\2285000066 Africa Maize Yield Gap\\SurveyData"
-
-library(plyr)
 library(dplyr)
 library(ggplot2)
 library(stargazer)
